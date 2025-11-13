@@ -98,8 +98,18 @@ async function bootstrap() {
   AppModule.appReady(app, logger);
   app.enableShutdownHooks();
   const config = app.get(WhatsappConfigService);
-  await app.listen(config.port);
-  logger.info(`WhatsApp HTTP API is running on: ${await app.getUrl()}`);
+
+  // Use Railway/Platform PORT if present; fall back to config.port or 8080.
+  const port =
+    process.env.PORT && process.env.PORT !== ''
+      ? parseInt(process.env.PORT, 10)
+      : config?.port ?? 8080;
+
+  // Important: bind to 0.0.0.0 so the hosting platform can reach the server.
+  await app.listen(port, '0.0.0.0');
+
+  // Log the address we deliberately bound to
+  logger.info(`WhatsApp HTTP API is running on: http://0.0.0.0:${port}`);
   logger.info(VERSION, 'Environment');
 }
 
